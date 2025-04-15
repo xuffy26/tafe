@@ -1,9 +1,8 @@
-import random
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 import numpy as np
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import img_to_array
+from PIL import Image
 
-# Simulate PARTS_DB
 PARTS_DB = {
     "fuel_pump": {
         "name": "Fuel Pump",
@@ -22,24 +21,19 @@ PARTS_DB = {
     }
 }
 
-# Example model loading (replace with actual model)
-model = load_model('path_to_your_model.h5')
+# Load your trained Keras model (HDF5 file)
+model = load_model("model.h5")  # <-- Replace with your actual model path
+CLASS_NAMES = list(PARTS_DB.keys())  # Should match your model classes
 
-def classify_image(image_data):
-    # Preprocess image (resize, normalize, etc.)
-    img = image.load_img(image_data, target_size=(224, 224))  # Example size for a pre-trained model
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-    img_array /= 255.0  # Normalize if needed
-    
-    # Model inference
-    predictions = model.predict(img_array)
-    
-    # Assuming predictions are class labels (e.g., 0, 1, 2)
-    predicted_label = np.argmax(predictions, axis=1)[0]
-    
-    # Map label to part in PARTS_DB (replace with actual mapping logic)
-    part_keys = list(PARTS_DB.keys())
-    predicted_part = PARTS_DB[part_keys[predicted_label]]
-    
-    return predicted_part
+def classify_image(pil_image):
+    # Preprocess image (resize & normalize)
+    image = pil_image.resize((224, 224))  # Match the input size of your model
+    image = img_to_array(image) / 255.0
+    image = np.expand_dims(image, axis=0)
+
+    # Predict
+    prediction = model.predict(image)
+    predicted_index = np.argmax(prediction[0])
+    label = CLASS_NAMES[predicted_index]
+
+    return PARTS_DB[label]
